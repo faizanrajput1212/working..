@@ -68,7 +68,6 @@ app.get('/studentprofile/:id', async (req, res) => {
       data.dob = formattedDate
     }
     )
-    console.log(results)
     res.json(results);
   } catch (error) {
     console.error(error);
@@ -257,7 +256,6 @@ app.post('/progress/:time/:id/:class/:section', async (req, res) => {
   const query1 = `INSERT INTO admin_logs (log_message,time) values ('${des}','${time}')`;
   const query = `INSERT INTO progress_report (fk_student_id, progress_grade, subject,date) VALUES ${data.map(() => '(?,?,?,?)').join(', ')}`;
   const values = data.flatMap(item => [item.fk_student_id, item.progress_grade, item.subject,item.date]);
-  console.log(data)
   try {
     const [results] = await pool.execute(query, values);
     const [results1] = await pool.execute(query1);
@@ -280,7 +278,7 @@ app.post('/every/:teacher/:time/:class/:section', async (req, res) => {
   
   const query = `INSERT INTO notices (fk_student_id, notice_description,notice_status,notice_date) VALUES ${daa.map(() => '(?,?,?,?)').join(', ')} `;
   const values = daa.flatMap(item => [item.fk_student_id, item.notice_description, item.notice_status,item.notice_date]);
-console.log(values)
+
   try {
     const [results] = await pool.execute(query,values);
     const [results1] = await pool.execute(query1);
@@ -296,7 +294,7 @@ app.post('/insertreport', async (req, res) => {
   const query = `INSERT INTO attendance (fk_student_id, attendance,date) VALUES ${attendance.map(() => '(?,?,?)').join(', ')}`;
   const query2 = ``;
   const values = attendance.flatMap((attendance) => [attendance.student_id, attendance.attendance, attendance.date]);
-  console.log(values)
+ 
   try {
     const [results] = await pool.execute(query, values);
     res.send({ message: 'Attendance inserted successfully' });
