@@ -373,6 +373,14 @@ app.get('/fetchnotice/:student_id', async (req, res) => {
   const query = `SELECT notice_description,notice_date,mark_read,notice_id,fk_student_id,notice_status from notices where fk_student_id=${student_id}`
   try {
     const [result] = await pool.execute(query)
+      results.map((data)=>
+    {
+      const datastring = `'${data.notice_date}'`
+      const dateObj = new Date(datastring);
+      const formattedDate = `${dateObj.getFullYear()}/${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getDate().toString().padStart(2, '0')}`;
+      data.notice_date = formattedDate
+    }
+    )
     res.json(result)
   } catch (error) {
     res.status(500).json({ message: 'Error fetching users' });
