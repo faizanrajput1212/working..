@@ -2,6 +2,11 @@ const express = require('express');
 const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken')
 const app = express();
+const bycrypt=require('bcrypt')
+const multer = require('multer');
+const FTPClient = require('ftp');
+const path = require('path');
+const cors = require('cors');
 app.use(express.json());
 
 const dbConfig = {
@@ -11,18 +16,89 @@ const dbConfig = {
   database: process.env.DATABASE
 };
 
+
+const upload = multer({ dest: 'uploads/fees' }); // Temporary storage
+app.use(cors()); // Enable CORS
+
+const ftpConfig = {
+  host: process.env.FHOST,
+  user: process.env.FUSER,
+  password:process.env.FPASSWORD,
+};
+app.post('/upload', upload.single('image'), (req, res) => {
+  const client = new FTPClient();
+
+  client.connect(ftpConfig);
+
+  client.on('ready', () => {
+      const localFilePath = path.join(__dirname, req.file.path);
+      const remoteFilePath = `/public_html/uploads/fees/${req.file.originalname}`;
+      client.put(localFilePath, remoteFilePath, (err) => {
+          if (err) {
+              client.end();
+              return res.status(500).send('Error uploading file');
+          }
+          client.end();
+          res.send('File uploaded successfully');
+      });
+  });
+
+  client.on('error', (err) => {
+      console.error('FTP error:', err);
+      res.status(500).send('FTP connection error');
+  });
+});
+
+
 const pool = mysql.createPool(dbConfig);
 JWT_SECRET = " dvabjhvnksdm!!!vmdfbsdvjbnsdrfnghweng"
-app.get('/api/studentlogin', async (req, res) => {
+app.get('/api/studentlogin/:roll/:pass/:phone', async (req, res) => {
+const plaintext=req.params.pass
+const roll_no=req.params.roll
+const email=req.params.phone
+async function hashPassword(plainTextPassword) {
   try {
-    const [results] = await pool.execute('SELECT student_id, password, roll_no,mobile_no ,name FROM student_profile');
+    // Hash the password using the PHP password_hash() function
+    const hashedPassword = await bycrypt.hash(plainTextPassword, 10);
+    return hashedPassword;
+  } catch (error) {
+    console.error('Error hashing password:', error);
+    throw error;
+  }
+}
+
+const hashedPassword = await hashPassword(plaintext);
+console.log('Hashed password:', hashedPassword);
+  try {
+    const [results] = await pool.execute(`SELECT student_id, password, roll_no,mobile_no ,name FROM student_profile where roll_no=${roll_no} AND password='${hashedPassword}' AND mobile_no=${email}`);
     res.json(results);
+    console.log(results)
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error fetching users' });
   }
 });
+app.get('/pass', async (req,res)=>{
 
+  async function generateHashedPassword(plainTextPassword) {
+    try {
+      const hashedPassword = await bycrypt.hash(plainTextPassword, 10);
+      return hashedPassword;
+    } catch (error) {
+      console.error('Error hashing password:', error);
+    }
+  }
+  
+  async function main() {
+    const plainTextPassword = '1234567';
+    const hashedPassword = await generateHashedPassword(plainTextPassword);
+    
+    console.log('Plain-text password:', plainTextPassword);
+    console.log('Hashed password:', hashedPassword); // This will be a new hash
+  }
+  
+  main();
+})
 app.get('/authentication/:id', async (req, res) => {
   const std_id= req.params.id;
   const token = jwt.sign({ std_id }, JWT_SECRET);
@@ -256,6 +332,7 @@ app.post('/progress/:time/:id/:class/:section', async (req, res) => {
   const query1 = `INSERT INTO admin_logs (log_message,time) values ('${des}','${time}')`;
   const query = `INSERT INTO progress_report (fk_student_id, progress_grade, subject,date) VALUES ${data.map(() => '(?,?,?,?)').join(', ')}`;
   const values = data.flatMap(item => [item.fk_student_id, item.progress_grade, item.subject,item.date]);
+  console.log(data)
   try {
     const [results] = await pool.execute(query, values);
     const [results1] = await pool.execute(query1);
@@ -278,7 +355,7 @@ app.post('/every/:teacher/:time/:class/:section', async (req, res) => {
   
   const query = `INSERT INTO notices (fk_student_id, notice_description,notice_status,notice_date) VALUES ${daa.map(() => '(?,?,?,?)').join(', ')} `;
   const values = daa.flatMap(item => [item.fk_student_id, item.notice_description, item.notice_status,item.notice_date]);
-
+console.log(values)
   try {
     const [results] = await pool.execute(query,values);
     const [results1] = await pool.execute(query1);
@@ -294,7 +371,7 @@ app.post('/insertreport', async (req, res) => {
   const query = `INSERT INTO attendance (fk_student_id, attendance,date) VALUES ${attendance.map(() => '(?,?,?)').join(', ')}`;
   const query2 = ``;
   const values = attendance.flatMap((attendance) => [attendance.student_id, attendance.attendance, attendance.date]);
- 
+  console.log(values)
   try {
     const [results] = await pool.execute(query, values);
     res.send({ message: 'Attendance inserted successfully' });
@@ -373,14 +450,6 @@ app.get('/fetchnotice/:student_id', async (req, res) => {
   const query = `SELECT notice_description,notice_date,mark_read,notice_id,fk_student_id,notice_status from notices where fk_student_id=${student_id}`
   try {
     const [result] = await pool.execute(query)
-      result.map((data)=>
-    {
-      const datastring = `'${data.notice_date}'`
-      const dateObj = new Date(datastring);
-      const formattedDate = `${dateObj.getFullYear()}/${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getDate().toString().padStart(2, '0')}`;
-      data.notice_date = formattedDate
-    }
-    )
     res.json(result)
   } catch (error) {
     res.status(500).json({ message: 'Error fetching users' });
@@ -392,14 +461,6 @@ app.get('/fetchnotice/notice/:id', async (req, res) => {
   const query = `SELECT notice_description,notice_date,mark_read,notice_id,fk_student_id,notice_status from notices where notice_status="${data}"`
   try {
     const [result] = await pool.execute(query)
-     result.map((data)=>
-    {
-      const datastring = `'${data.notice_date}'`
-      const dateObj = new Date(datastring);
-      const formattedDate = `${dateObj.getFullYear()}/${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getDate().toString().padStart(2, '0')}`;
-      data.notice_date = formattedDate
-    }
-    )
     res.json(result)
   } catch (error) {
     res.status(500).json({ message: 'Error fetching users' });
