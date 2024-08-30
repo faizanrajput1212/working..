@@ -257,7 +257,7 @@ app.get('/class', async (req, res) => {
     res.status(500).json({ message: 'Error fetching users' });
   }
 })
-app.get('/api/studentlogin, async (req, res) => {
+app.get('/api/studentlogin', async (req, res) => {
 
   try {
     const [results] = await pool.execute(`SELECT student_id, password, roll_no FROM student_profile`);
