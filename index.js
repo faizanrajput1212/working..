@@ -260,7 +260,7 @@ app.get('/class', async (req, res) => {
 app.get('/api/studentlogin', async (req, res) => {
 
   try {
-    const [results] = await pool.execute(`SELECT student_id, password, roll_no FROM student_profile`);
+    const [results] = await pool.execute(`SELECT student_id, password, roll_no ,mobile_no FROM student_profile`);
     res.json(results);
   } catch (error) {
     console.error(error);
