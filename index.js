@@ -25,10 +25,10 @@ const ftpConfig = {
   user: process.env.FUSER,
   password:process.env.FPASSWORD,
 };
-app.post('/upload', upload.single('image'), (req, res) => {
   const client = new FTPClient();
 
   client.connect(ftpConfig);
+app.post('/upload', upload.single('image'), (req, res) => {
 
   client.on('ready', () => {
       const localFilePath = path.join(__dirname, req.file.path);
@@ -38,7 +38,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
               client.end();
               return res.status(500).send('Error uploading file');
           }
-          client.end();
+     
           res.send('File uploaded successfully');
       });
   });
