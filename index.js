@@ -35,7 +35,6 @@ app.post('/upload', upload.single('image'), (req, res) => {
       const remoteFilePath = `/public_html/uploads/fees/${req.file.originalname}`;
       client.put(localFilePath, remoteFilePath, (err) => {
           if (err) {
-              client.end();
               return res.status(500).send('Error uploading file');
           }
      
