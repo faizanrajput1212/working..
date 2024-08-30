@@ -29,7 +29,9 @@ const ftpConfig = {
 
   client.connect(ftpConfig);
 app.post('/upload', upload.single('image'), (req, res) => {
+ const client = new FTPClient();
 
+  client.connect(ftpConfig);
   client.on('ready', () => {
       const localFilePath = path.join(__dirname, req.file.path);
       const remoteFilePath = `/public_html/uploads/fees/${req.file.originalname}`;
