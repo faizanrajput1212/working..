@@ -97,7 +97,7 @@ const phone=req.params.phone;
 const pass=req.params.pass;
   console.log(` Teacher ID is ${id} Teacher Phone is ${phone}  Teacher password is ${pass}`)
   try {
-    const [results] = await pool.execute(`SELECT * FROM teacher_profile WHERE roll_no='${id}' AND mobile_no='${phone}' AND password='${pass}'`);
+    const [results] = await pool.execute(`SELECT * FROM teacher_profile WHERE school_id='${id}' AND phone_no='${phone}' AND password='${pass}'`);
     res.json(results)
   } catch (error) {
     console.error(error);
