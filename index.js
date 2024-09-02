@@ -181,7 +181,7 @@ app.get('/api/request/:id', async (req, res) => {
   const fk_student_id = req.params.id;
   let cal=0;
   try {
-    const [results] = await pool.execute(`Update student_fee Set fee_status='fee_request' where fk_student_id={fk_student_id}`);
+    const [results] = await pool.execute(`UPDATE student_fee SET fee_status='fee_request' WHERE fk_student_id={fk_student_id}`);
     results.map((data)=>{
       cal=cal+data.pending_dues;
       data.totaldues=cal;
