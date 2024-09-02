@@ -73,7 +73,7 @@ app.get('/api/teacherprofile/:add', async (req, res) => {
       
     });
       });
-  });
+
 
   client.on('error', (err) => {
       console.error('FTP error:', err);
