@@ -253,10 +253,10 @@ const pass=req.params.pass;
     const [results] = await pool.execute(`SELECT * FROM student_profile WHERE roll_no='${id}' AND mobile_no='${phone}' AND password='${pass}'`);
     if(results.length>0){
       console.log("Right")
-      res.json(true)
+      res.json(results)
     }else{
      console.log("Wrong")
-      res.json(false)
+      res.json(results)
     }
   } catch (error) {
     console.error(error);
