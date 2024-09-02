@@ -17,6 +17,37 @@ const dbConfig = {
 };
 
 
+app.get('/fetch-image/:fileName', (req, res) => {
+    const fileName = req.params.fileName;
+    const localFilePath = path.join(__dirname, fileName);
+
+    const client = new FTP();
+    client.on('ready', () => {
+        client.get(fileName, (err, stream) => {
+            if (err) {
+                res.status(500).json({ error: `Error fetching image: ${err.message}` });
+                client.end();
+                return;
+            }
+
+            stream.pipe(fs.createWriteStream(localFilePath));
+            stream.on('end', () => {
+                res.sendFile(localFilePath, (err) => {
+                    if (err) {
+                        res.status(500).json({ error: 'Failed to send file' });
+                    }
+                    client.end();
+                    fs.unlink(localFilePath, (err) => {
+                        if (err) console.error('Failed to delete local file:', err);
+                    });
+                });
+            });
+        });
+    });
+
+    client.connect(ftpConfig);
+});
+
 const upload = multer({ dest: 'uploads/fees' }); // Temporary storage
 app.use(cors()); // Enable CORS
 
