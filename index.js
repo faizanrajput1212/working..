@@ -41,41 +41,6 @@ const checkFtpConnection = () => {
 checkFtpConnection();
 
 
-app.get('/image', (req, res) => {
-  const { filename } = req.query; // Get the filename from query parameters
-  if (!filename) {
-    return res.status(400).send('Filename is required');
-  }
-
-  const client = new FTP();
-  const remoteFilePath = `/uploads/teachers-profile/${filename}`; // Specify the correct path
-
-  client.on('ready', () => {
-    const localFilePath = path.join(__dirname, 'temp_image.jpg');
-
-    // Download the file
-    client.get(remoteFilePath, (err, stream) => {
-      if (err) {
-        console.error('FTP Error:', err);
-        return res.status(500).send('Error fetching image');
-      }
-      stream.once('close', () => {
-        client.end();
-        res.sendFile(localFilePath, (err) => {
-          if (err) {
-            console.error(err);
-            res.status(500).send('Error sending file');
-          }
-          fs.unlinkSync(localFilePath); // Remove the temp file after sending
-        });
-      });
-      stream.pipe(fs.createWriteStream(localFilePath));
-    });
-  });
-
-  client.connect(ftpConfig);
-});
-
 app.post('/upload', upload.single('image'), (req, res) => {
  const client = new FTPClient();
 
