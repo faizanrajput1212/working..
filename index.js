@@ -231,7 +231,7 @@ const pass=req.params.pass;
   console.log(` Student ID is ${id} Student Phone is ${phone}  Student password is ${pass}`)
   try {
     const [results] = await pool.execute(`SELECT * FROM student_profile WHERE roll_no='${id}' AND mobile_no='${phone}' AND password='${pass}'`);
-   
+    res.json(results)
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error fetching users' });
