@@ -39,6 +39,7 @@ const checkFtpConnection = () => {
 
 checkFtpConnection();
 app.get('/fetch-image/:fileName', (req, res) => {
+    const client=new FTPClient();
     const fileName = req.params.fileName;
     const localFilePath = path.join(__dirname, fileName);
     const ftpDirectoryPath = '/path/to/ftp/directory'; // Set your FTP directory path here
