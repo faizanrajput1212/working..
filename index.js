@@ -25,7 +25,23 @@ const ftpConfig = {
   user: process.env.FUSER,
   password:process.env.FPASSWORD,
 };
+const checkFtpConnection = () => {
+    const client = new FTPClient();
 
+    client.on('ready', () => {
+        console.log('Connected to FTP server');
+        client.end(); // Close the connection
+    });
+
+    client.on('error', (error) => {
+        console.error('Failed to connect:', error.message);
+    });
+
+    // Connect to the FTP server
+    client.connect(ftpConfig);
+};
+
+checkFtpConnection();
 app.post('/upload', upload.single('image'), (req, res) => {
  const client = new FTPClient();
 
