@@ -181,7 +181,7 @@ app.get('/api/request/:id', async (req, res) => {
   const fk_student_id = req.params.id;
   let cal=0;
   try {
-    const [results] = await pool.execute(`UPDATE student_fee SET fee_status='fee_request' WHERE fk_student_id={fk_student_id}`);
+    const [results] = await pool.execute(`UPDATE student_fee SET fee_status='fee_request' WHERE fk_student_id=${fk_student_id}`);
     res.json(results);
   } catch (error) {
     console.error(error);
