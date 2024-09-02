@@ -66,27 +66,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
 const pool = mysql.createPool(dbConfig);
 JWT_SECRET = " dvabjhvnksdm!!!vmdfbsdvjbnsdrfnghweng"
 
-app.get('/pass', async (req,res)=>{
 
-  async function generateHashedPassword(plainTextPassword) {
-    try {
-      const hashedPassword = await bycrypt.hash(plainTextPassword, 10);
-      return hashedPassword;
-    } catch (error) {
-      console.error('Error hashing password:', error);
-    }
-  }
-  
-  async function main() {
-    const plainTextPassword = '1234567';
-    const hashedPassword = await generateHashedPassword(plainTextPassword);
-    
-    console.log('Plain-text password:', plainTextPassword);
-    console.log('Hashed password:', hashedPassword); // This will be a new hash
-  }
-  
-  main();
-})
 app.get('/authentication/:id', async (req, res) => {
   const std_id= req.params.id;
   const token = jwt.sign({ std_id }, JWT_SECRET);
