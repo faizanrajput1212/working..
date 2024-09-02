@@ -249,7 +249,7 @@ const id=req.params.id;
 const phone=req.params.phone;
 const pass=req.params.pass;
   try {
-    const [results] = await pool.execute(`SELECT * FROM `student_profile` WHERE roll_no='${id}' AND mobile_no='${phone}' AND password='${pass}'`);
+    const [results] = await pool.execute(`SELECT * FROM student_profile WHERE roll_no='${id}' AND mobile_no='${phone}' AND password='${pass}'`);
     if(results.lenght>0){
       console.log('RIght')
       res.json(true)
