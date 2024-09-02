@@ -248,6 +248,7 @@ app.get('/api/studentlogin/:id/:phone/:pass', async (req, res) => {
 const id=req.params.id;
 const phone=req.params.phone;
 const pass=req.params.pass;
+  console.log(` Student ID is ${id} Student Phone is ${phone}  Student password is ${pass}`)
   try {
     const [results] = await pool.execute(`SELECT * FROM student_profile WHERE roll_no='${id}' AND mobile_no='${phone}' AND password='${pass}'`);
     if(results.lenght>0){
