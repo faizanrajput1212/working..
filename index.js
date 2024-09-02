@@ -7,6 +7,7 @@ const multer = require('multer');
 const FTPClient = require('ftp');
 const path = require('path');
 const cors = require('cors');
+const fs=require('fs')
 app.use(express.json());
 
 const dbConfig = {
@@ -16,38 +17,46 @@ const dbConfig = {
   database: process.env.DATABASE
 };
 
-
 app.get('/fetch-image/:fileName', (req, res) => {
-    const fileName = req.params.fileName;
-    const localFilePath = path.join(__dirname, fileName);
+  const fileName = req.params.fileName;
+  const localFilePath = path.join(__dirname, fileName);
+  const ftpDirectoryPath = '/public_html/uploads/students-profile'; // Set your FTP directory path here
 
-    const client = new FTPClient();
-    client.on('ready', () => {
-        client.get(fileName, (err, stream) => {
-            if (err) {
-                res.status(500).json({ error: `Error fetching image: ${err.message}` });
-                client.end();
-                return;
-            }
+  const client = new FTP();
+  client.on('ready', () => {
+      // Change to the desired directory on the FTP server
+      client.cwd(ftpDirectoryPath, (err) => {
+          if (err) {
+              res.status(500).json({ error: `Error changing directory: ${err.message}` });
+              client.end();
+              return;
+          }
 
-            stream.pipe(fs.createWriteStream(localFilePath));
-            stream.on('end', () => {
-                res.sendFile(localFilePath, (err) => {
-                    if (err) {
-                        res.status(500).json({ error: 'Failed to send file' });
-                    }
-                    client.end();
-                    fs.unlink(localFilePath, (err) => {
-                        if (err) console.error('Failed to delete local file:', err);
-                    });
-                });
-            });
-        });
-    });
+          client.get(fileName, (err, stream) => {
+              if (err) {
+                  res.status(500).json({ error: `Error fetching image: ${err.message}` });
+                  client.end();
+                  return;
+              }
 
-    client.connect(ftpConfig);
+              stream.pipe(fs.createWriteStream(localFilePath));
+              stream.on('end', () => {
+                  res.sendFile(localFilePath, (err) => {
+                      if (err) {
+                          res.status(500).json({ error: 'Failed to send file' });
+                      }
+                      client.end();
+                      fs.unlink(localFilePath, (err) => {
+                          if (err) console.error('Failed to delete local file:', err);
+                      });
+                  });
+              });
+          });
+      });
+  });
+
+  client.connect(ftpConfig);
 });
-
 const upload = multer({ dest: 'uploads/fees' }); // Temporary storage
 app.use(cors()); // Enable CORS
 
