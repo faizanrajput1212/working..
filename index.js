@@ -182,15 +182,6 @@ app.get('/api/request/:id', async (req, res) => {
   let cal=0;
   try {
     const [results] = await pool.execute(`UPDATE student_fee SET fee_status='fee_request' WHERE fk_student_id={fk_student_id}`);
-    results.map((data)=>{
-      cal=cal+data.pending_dues;
-      data.totaldues=cal;
-      const datastring = `'${data.due_date}'`
-      const dateObj = new Date(datastring);
-      const formattedDate = `${dateObj.getFullYear()}/${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getDate().toString().padStart(2, '0')}`;
-      data.due_date = formattedDate;
-    }
-    )
     res.json(results);
   } catch (error) {
     console.error(error);
