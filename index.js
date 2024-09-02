@@ -38,47 +38,6 @@ const checkFtpConnection = () => {
 };
 
 checkFtpConnection();
-app.get('/fetch-image/:fileName', (req, res) => {
-    const fileName = req.params.fileName; // Get the image name from the request
-    const localFilePath = path.join(__dirname, fileName); // Local path to save the image
-    const ftpDirectoryPath = '/public_html/uploads/teachers-profile'; // Directory on the FTP server
-
-    client.on('ready', () => {
-        // Change to the desired directory on the FTP server
-        client.cwd(ftpDirectoryPath, (err) => {
-            if (err) {
-                res.status(500).json({ error: `Error changing directory: ${err.message}` });
-          
-                return;
-            }
-
-            // Fetch the image by its name
-            client.get(fileName, (err, stream) => {
-                if (err) {
-                    res.status(500).json({ error: `Error fetching image: ${err.message}` });
-                    return;
-                }
-
-                // Create a writable stream to save the image locally
-                stream.pipe(fs.createWriteStream(localFilePath));
-                stream.on('end', () => {
-                    // Send the file back to the client
-                    res.sendFile(localFilePath, (err) => {
-                        if (err) {
-                            res.status(500).json({ error: 'Failed to send file' });
-                        }
-                        // Clean up the local file after sending
-                        fs.unlink(localFilePath, (err) => {
-                            if (err) console.error('Failed to delete local file:', err);
-                        });
-                    });
-                });
-            });
-        });
-    });
-
-    client.connect(ftpConfig);
-});
 
 app.post('/upload', upload.single('image'), (req, res) => {
  const client = new FTPClient();
