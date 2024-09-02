@@ -25,14 +25,12 @@ const ftpConfig = {
   user: process.env.FUSER,
   password:process.env.FPASSWORD,
 };
+const client = new FTPClient();
 const checkFtpConnection = () => {
-    const client = new FTPClient();
-
     client.on('ready', () => {
         console.log('Connected to FTP server');
         client.end(); // Close the connection
     });
-
     client.on('error', (error) => {
         console.error('Failed to connect:', error.message);
     });
