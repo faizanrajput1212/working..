@@ -65,32 +65,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
 
 const pool = mysql.createPool(dbConfig);
 JWT_SECRET = " dvabjhvnksdm!!!vmdfbsdvjbnsdrfnghweng"
-app.get('/api/studentlogin/:roll/:pass/:phone', async (req, res) => {
-const plaintext=req.params.pass
-const roll_no=req.params.roll
-const email=req.params.phone
-async function hashPassword(plainTextPassword) {
-  try {
-    // Hash the password using the PHP password_hash() function
-    const hashedPassword = await bycrypt.hash(plainTextPassword, 10);
-    return hashedPassword;
-  } catch (error) {
-    console.error('Error hashing password:', error);
-    throw error;
-  }
-}
 
-const hashedPassword = await hashPassword(plaintext);
-console.log('Hashed password:', hashedPassword);
-  try {
-    const [results] = await pool.execute(`SELECT student_id, password, roll_no,mobile_no ,name FROM student_profile where roll_no=${roll_no} AND password='${hashedPassword}' AND mobile_no=${email}`);
-    res.json(results);
-    console.log(results)
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error fetching users' });
-  }
-});
 app.get('/pass', async (req,res)=>{
 
   async function generateHashedPassword(plainTextPassword) {
@@ -274,7 +249,7 @@ const id=req.params.id;
 const phone=req.params.phone;
 const pass=req.params.pass;
   try {
-    const [results] = await pool.execute(`SELECT student_id, password, roll_no ,mobile_no FROM student_profile where student_id=${id} AND password='${pass}' AND mobile_no='${phone}'`);
+    const [results] = await pool.execute(`SELECT * FROM `student_profile` WHERE roll_no='${id}' AND mobile_no='${phone}' AND password='${pass}'`);
     if(results.lenght>0){
       console.log('RIght')
       res.json(true)
