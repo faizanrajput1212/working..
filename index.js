@@ -91,10 +91,14 @@ app.get('/api/fees/:id', async (req, res) => {
     res.status(500).json({ message: 'Error fetching users' });
   }
 });
-app.get('/api/teacherlogin', async (req, res) => {
+app.get('/api/teacherlogin/:id/:phone/:pass', async (req, res) => {
+const id=req.params.id;
+const phone=req.params.phone;
+const pass=req.params.pass;
+  console.log(` Teacher ID is ${id} Teacher Phone is ${phone}  Teacher password is ${pass}`)
   try {
-    const [results] = await pool.execute('SELECT * FROM teacher_profile');
-    res.json(results);
+    const [results] = await pool.execute(`SELECT * FROM teacher_profile WHERE roll_no='${id}' AND mobile_no='${phone}' AND password='${pass}'`);
+    res.json(results)
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error fetching users' });
