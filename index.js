@@ -82,9 +82,46 @@ app.get('/api/teacherprofile/:add', async (req, res) => {
 });
 
 
-app.get('teacherprofile'),(async (req,res)=>{
-  
-})
+app.get('/api/studentprofile/:add', async (req, res) => {
+  const add = req.params.add;
+ const client = new FTPClient();
+
+  client.connect(ftpConfig);
+  client.on('ready', () => {
+       console.log('Connected to the FTP server.');
+    const localFilePath = path.join(__dirname, 'temp_image.jpg');
+    // List files in the current directory
+    client.list((err, list) => {
+        if (err) throw err;
+        client.cwd(`/public_html/uploads/students-profile`, (err) => {
+            if (err) throw err;
+            console.log('Changed working directory successfully.');
+            client.get(`${add}`, (err, stream) => {
+                if (err) throw err;
+                stream.once('close', () => {
+                    client.end();
+                    res.sendFile(localFilePath, (err) => {
+                      if (err) {
+                        console.error(err);
+                        res.status(500).send('Error sending file');
+                      }
+                      fs.unlinkSync(localFilePath); // Remove the temp file after sending
+                    });
+                  });
+                  stream.pipe(fs.createWriteStream(localFilePath));
+            });
+        });
+      
+    });
+      });
+
+
+  client.on('error', (err) => {
+      console.error('FTP error:', err);
+      res.status(500).send('FTP connection error');
+  });
+});
+
 app.post('/upload', upload.single('image'), (req, res) => {
  const client = new FTPClient();
 
