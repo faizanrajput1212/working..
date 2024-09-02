@@ -165,6 +165,10 @@ app.get('/api/fees/:id', async (req, res) => {
     results.map((data)=>{
       cal=cal+data.pending_dues;
       data.totaldues=cal;
+       const datastring = `'${data.due_date}'`
+      const dateObj = new Date(datastring);
+      const formattedDate = `${dateObj.getFullYear()}/${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getDate().toString().padStart(2, '0')}`;
+      data.due_date = formattedDate
     }
     )
     res.json(results);
