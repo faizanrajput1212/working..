@@ -42,7 +42,7 @@ app.get('/fetch-image/:fileName', (req, res) => {
     const client=new FTPClient();
     const fileName = req.params.fileName;
     const localFilePath = path.join(__dirname, fileName);
-    const ftpDirectoryPath = '/path/to/ftp/directory'; // Set your FTP directory path here
+    const ftpDirectoryPath = '/public_html/uploads/teachers-profile'; // Set your FTP directory path here
     client.on('ready', () => {
         // Change to the desired directory on the FTP server
         client.cwd(ftpDirectoryPath, (err) => {
