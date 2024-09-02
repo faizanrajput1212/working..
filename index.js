@@ -21,7 +21,7 @@ app.get('/fetch-image/:fileName', (req, res) => {
     const fileName = req.params.fileName;
     const localFilePath = path.join(__dirname, fileName);
 
-    const client = new FTP();
+    const client = new FTPClient();
     client.on('ready', () => {
         client.get(fileName, (err, stream) => {
             if (err) {
