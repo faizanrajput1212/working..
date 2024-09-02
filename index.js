@@ -7,7 +7,6 @@ const multer = require('multer');
 const FTPClient = require('ftp');
 const path = require('path');
 const cors = require('cors');
-const fs=require('fs')
 app.use(express.json());
 
 const dbConfig = {
