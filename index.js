@@ -177,12 +177,13 @@ app.get('/api/fees/:id', async (req, res) => {
     res.status(500).json({ message: 'Error fetching users' });
   }
 });
-app.get('/api/request/:id/:status', async (req, res) => {
+app.get('/api/request/:id/:status/:date', async (req, res) => {
   const fk_student_id = req.params.id;
   const status = req.params.status;
+  const date = req.params.status;
   let cal=0;
   try {
-    const [results] = await pool.execute(`UPDATE student_fee SET fee_status='fee_request',fee_method='${status}' WHERE fk_student_id=${fk_student_id}`);
+    const [results] = await pool.execute(`UPDATE student_fee SET fee_status='${status}',fee_method='cash',payment_date='${date}' WHERE fk_student_id=${fk_student_id}`);
     res.json(results);
   } catch (error) {
     console.error(error);
