@@ -486,8 +486,8 @@ app.post('/InsertDiary/:fk_section_id/:subject/:subject_diary/:date/:id/:time/:c
   const classs = req.params.class;
   const section = req.params.section;
   const des = `Teacher with <strong>ID: ${schoolid}</strong> added Home Work Diary of <strong>Class:${classs} Section:${section} </strong>`;
-  const query = `INSERT INTO homework_diary (fk_section_id,subject,subject_diary,date) VALUES (${fk_section_id},'${subject}','${subject_diary}','${date}') `;
-  const query1 = `INSERT INTO admin_logs (log_message,time) values ('${des}','${time}')`;
+  const query = `INSERT INTO homework_diary (fk_section_id,subject,subject_diary,date) VALUES (${fk_section_id},'${subject}','${subject_diary}','${time}') `;
+  const query1 = `INSERT INTO admin_logs (log_message,time) values ('${des}','${date}')`;
 
   try {
     const [results] = await pool.execute(query);
