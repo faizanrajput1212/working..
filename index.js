@@ -189,6 +189,18 @@ app.get('/api/request/:id/:status', async (req, res) => {
     res.status(500).json({ message: 'Error fetching users' });
   }
 });
+app.get('/api/onlinerequest/:date/:id/:image', async (req, res) => {
+  const fk_student_id = req.params.id;
+  const date = req.params.date;
+  const image = req.params.image;
+  try {
+    const [results] = await pool.execute(`UPDATE student_fee SET fee_status='fee_request',fee_method='online',payment_date='${date}',receipt_image=${image} WHERE fk_student_id=${fk_student_id}`);
+    res.json(results);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching users' });
+  }
+});
 app.get('/api/teacherlogin/:id/:phone/:pass', async (req, res) => {
 const id=req.params.id;
 const phone=req.params.phone;
