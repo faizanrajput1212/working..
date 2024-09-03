@@ -89,12 +89,6 @@ const img=`https://codesmine.net/uploads/students-profile/${add}`
 });
 
 
-  client.on('error', (err) => {
-      console.error('FTP error:', err);
-      res.status(500).send('FTP connection error');
-  });
-});
-
 app.post('/upload', upload.single('image'), (req, res) => {
  const client = new FTPClient();
 
