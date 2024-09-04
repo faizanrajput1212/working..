@@ -41,19 +41,6 @@ const checkFtpConnection = () => {
 checkFtpConnection();
 
 
-app.get('/api/teacherprofile/:add', async (req, res) => {
-  const add = req.params.add;
- const img=`https://codesmine.net/uploads/teachers-profile/${add}`
-  res.json(img)
-});
-
-
-app.get('/api/studentprofile/:add', async (req, res) => {
-  const add = req.params.add;
-const img=`https://codesmine.net/uploads/students-profile/${add}`
-  res.json(img)
-});
-
 
 app.post('/upload', upload.single('image'), (req, res) => {
  const client = new FTPClient();
@@ -286,7 +273,7 @@ const pass=req.params.pass;
     const [results] = await pool.execute(`SELECT * FROM student_profile WHERE roll_no='${id}' AND mobile_no='${phone}' AND password='${pass}'`);
      if(results.length>0){
         results.map((data)=>{
-          data.image=`https://codesmine.net/uploads/teachers-profile/${data.image}`
+          data.image=`https://codesmine.net/uploads/students-profile/${data.image}`
       })
     }
     res.json(results)
