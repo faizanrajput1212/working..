@@ -142,9 +142,11 @@ const pass=req.params.pass;
   console.log(` Teacher ID is ${id} Teacher Phone is ${phone}  Teacher password is ${pass}`)
   try {
     const [results] = await pool.execute(`SELECT * FROM teacher_profile WHERE school_id='${id}' AND phone_no='${phone}' AND password='${pass}'`);
-    results.map((data)=>{
-        data.image=`https://codesmine.net/uploads/teachers-profile/${data.image}`
-    })
+    if(results.length>0){
+        results.map((data)=>{
+          data.image=`https://codesmine.net/uploads/teachers-profile/${data.image}`
+      })
+    }
     res.json(results)
   } catch (error) {
     console.error(error);
@@ -282,9 +284,11 @@ const pass=req.params.pass;
   console.log(` Student ID is ${id} Student Phone is ${phone}  Student password is ${pass}`)
   try {
     const [results] = await pool.execute(`SELECT * FROM student_profile WHERE roll_no='${id}' AND mobile_no='${phone}' AND password='${pass}'`);
-     results.map((data)=>{
-        data.image=`https://codesmine.net/uploads/teachers-profile/${data.image}`
-    })
+     if(results.length>0){
+        results.map((data)=>{
+          data.image=`https://codesmine.net/uploads/teachers-profile/${data.image}`
+      })
+    }
     res.json(results)
   } catch (error) {
     console.error(error);
