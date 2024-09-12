@@ -1,41 +1,54 @@
-const express = require('express');
-const mysql = require('mysql2/promise');
-const jwt = require('jsonwebtoken')
-const app = express();
-const bycrypt=require('bcrypt')
+const express = require("express");
+const serverless = require("serverless-http");
 const multer = require('multer');
 const FTPClient = require('ftp');
 const path = require('path');
 const cors = require('cors');
-const fs = require('fs');
-app.use(express.json());
+const jwt = require('jsonwebtoken')
+const mysql = require('mysql2/promise');
+// Create an instance of the Express app
+const router = express();
 
+// Create a router to handle routes
+const app = express.Router();
+router.use(express.json());
+// Define a route that responds with a JSON object when a GET request is made to the root path
+app.get("/", (req, res) => {
+  res.json({
+    hello: "hi!"
+  });
+});
+app.get("/faizan", (req, res) => {
+  res.json({
+    hello: "hi!"
+  });
+});
 const dbConfig = {
-  host: process.env.HOST,
-  user: process.env.USER,
-  password: process.env.PASSWORD,
-  database: process.env.DATABASE
+  host: '77.37.35.21',
+  user: 'u650672385_root',
+  database: 'u650672385__myschool_db',
+  password: '_MYschool_db1'
 };
 const upload = multer({ dest: 'uploads/fees' }); // Temporary storage
 app.use(cors()); // Enable CORS
 
 const ftpConfig = {
-  host: process.env.FHOST,
-  user: process.env.FUSER,
-  password:process.env.FPASSWORD,
+  host: '77.37.37.178',
+  user: 'u650672385.codesmine.net',
+  password: 'CodsMine123!@#',
 };
 const client = new FTPClient();
 const checkFtpConnection = () => {
-    client.on('ready', () => {
-        console.log('Connected to FTP server');
-        client.end(); // Close the connection
-    });
-    client.on('error', (error) => {
-        console.error('Failed to connect:', error.message);
-    });
+  client.on('ready', () => {
+    console.log('Connected to FTP server');
+    client.end(); // Close the connection
+  });
+  client.on('error', (error) => {
+    console.error('Failed to connect:', error.message);
+  });
 
-    // Connect to the FTP server
-    client.connect(ftpConfig);
+  // Connect to the FTP server
+  client.connect(ftpConfig);
 };
 
 checkFtpConnection();
@@ -43,24 +56,24 @@ checkFtpConnection();
 
 
 app.post('/upload', upload.single('image'), (req, res) => {
- const client = new FTPClient();
+  const client = new FTPClient();
 
   client.connect(ftpConfig);
   client.on('ready', () => {
-      const localFilePath = path.join(__dirname, req.file.path);
-      const remoteFilePath = `/public_html/uploads/fees/${req.file.originalname}`;
-      client.put(localFilePath, remoteFilePath, (err) => {
-          if (err) {
-              return res.status(500).send('Error uploading file');
-          }
-     
-          res.send('File uploaded successfully');
-      });
+    const localFilePath = path.join(__dirname, req.file.path);
+    const remoteFilePath = `/public_html/uploads/fees/${req.file.originalname}`;
+    client.put(localFilePath, remoteFilePath, (err) => {
+      if (err) {
+        return res.status(500).send('Error uploading file');
+      }
+
+      res.send('File uploaded successfully');
+    });
   });
 
   client.on('error', (err) => {
-      console.error('FTP error:', err);
-      res.status(500).send('FTP connection error');
+    console.error('FTP error:', err);
+    res.status(500).send('FTP connection error');
   });
 });
 
@@ -70,7 +83,7 @@ JWT_SECRET = " dvabjhvnksdm!!!vmdfbsdvjbnsdrfnghweng"
 
 
 app.get('/authentication/:id', async (req, res) => {
-  const std_id= req.params.id;
+  const std_id = req.params.id;
   const token = jwt.sign({ std_id }, JWT_SECRET);
   console.log(token)
   if (res.status(201)) {
@@ -79,12 +92,12 @@ app.get('/authentication/:id', async (req, res) => {
 })
 app.get('/api/fees/:id', async (req, res) => {
   const fk_student_id = req.params.id;
-  let cal=0;
+  let cal = 0;
   try {
     const [results] = await pool.execute(`SELECT * FROM student_fee where fk_student_id=${fk_student_id}`);
-    results.map((data)=>{
-      cal=cal+data.pending_dues;
-      data.totaldues=cal;
+    results.map((data) => {
+      cal = cal + data.pending_dues;
+      data.totaldues = cal;
       const datastring = `'${data.due_date}'`
       const dateObj = new Date(datastring);
       const formattedDate = `${dateObj.getFullYear()}/${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getDate().toString().padStart(2, '0')}`;
@@ -101,7 +114,7 @@ app.get('/api/request/:id/:status/:date', async (req, res) => {
   const fk_student_id = req.params.id;
   const status = req.params.status;
   const date = req.params.date;
-  let cal=0;
+  let cal = 0;
   try {
     const [results] = await pool.execute(`UPDATE student_fee SET fee_status='${status}',fee_method='cash' , payment_date='${date}' WHERE fk_student_id=${fk_student_id}`);
     res.json(results);
@@ -124,15 +137,15 @@ app.get('/api/onlinerequest/:date/:id/:image/:status', async (req, res) => {
   }
 });
 app.get('/api/teacherlogin/:id/:phone/:pass', async (req, res) => {
-const id=req.params.id;
-const phone=req.params.phone;
-const pass=req.params.pass;
+  const id = req.params.id;
+  const phone = req.params.phone;
+  const pass = req.params.pass;
   console.log(` Teacher ID is ${id} Teacher Phone is ${phone}  Teacher password is ${pass}`)
   try {
     const [results] = await pool.execute(`SELECT * FROM teacher_profile WHERE school_id='${id}' AND phone_no='${phone}' AND password='${pass}'`);
-    if(results.length>0){
-        results.map((data)=>{
-          data.image=`https://codesmine.net/uploads/teachers-profile/${data.image}`
+    if (results.length > 0) {
+      results.map((data) => {
+        data.image = `https://codesmine.net/uploads/teachers-profile/${data.image}`
       })
     }
     res.json(results)
@@ -145,8 +158,7 @@ app.get('/studentprofile/:id', async (req, res) => {
   const stdid = (req.params.id);
   try {
     const [results] = await pool.execute(`SELECT * FROM all_classes INNER JOIN class_sections ON all_classes.class_id = class_sections.fk_class_id INNER JOIN student_class ON class_sections.section_id = student_class.fk_section_id INNER JOIN student_profile ON student_class.fk_student_id =student_profile.student_id WHERE student_id = ${stdid} AND status='1'`);
-    results.map((data)=>
-    {
+    results.map((data) => {
       const datastring = `'${data.dob}'`
       const dateObj = new Date(datastring);
       const formattedDate = `${dateObj.getFullYear()}/${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getDate().toString().padStart(2, '0')}`;
@@ -163,11 +175,11 @@ app.get('/progressstudent/:id', async (req, res) => {
   const stdid = (req.params.id);
   try {
     const [results] = await pool.execute(`SELECT * FROM progress_report WHERE fk_student_id=${stdid}`);
-    results.map((data)=>{
+    results.map((data) => {
       const datastring = `'${data.date}'`
       const date = new Date(datastring);
       const day = date.getDate();
-      data.date=day
+      data.date = day
     })
     res.send(results)
   } catch (error) {
@@ -234,12 +246,12 @@ app.get('/attendance/:id', async (req, res) => {
   const stdid = parseInt(req.params.id);
   try {
     const [results] = await pool.execute(`SELECT student_id,name,attendance,date from student_profile INNER JOIN attendance ON student_profile.student_id=attendance.fk_student_id where student_id=${stdid}`);
-    results.map((data)=>{
+    results.map((data) => {
       const datastring = `'${data.date}'`
       const dateObj = new Date(datastring);
       const formattedDate = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
       data.date = formattedDate
-      data.month=`${(dateObj.getMonth() + 1).toString()}`
+      data.month = `${(dateObj.getMonth() + 1).toString()}`
     })
     res.json(results)
   } catch (error) {
@@ -266,15 +278,15 @@ app.get('/class', async (req, res) => {
   }
 })
 app.get('/api/studentlogin/:id/:phone/:pass', async (req, res) => {
-const id=req.params.id;
-const phone=req.params.phone;
-const pass=req.params.pass;
+  const id = req.params.id;
+  const phone = req.params.phone;
+  const pass = req.params.pass;
   console.log(` Student ID is ${id} Student Phone is ${phone}  Student password is ${pass}`)
   try {
     const [results] = await pool.execute(`SELECT * FROM student_profile WHERE roll_no='${id}' AND mobile_no='${phone}' AND password='${pass}'`);
-     if(results.length>0){
-        results.map((data)=>{
-          data.image=`https://codesmine.net/uploads/students-profile/${data.image}`
+    if (results.length > 0) {
+      results.map((data) => {
+        data.image = `https://codesmine.net/uploads/students-profile/${data.image}`
       })
     }
     res.json(results)
@@ -325,7 +337,7 @@ app.post('/insertattendance/:id/:time/:class/:section', async (req, res) => {
   const section = req.params.section;
   const des = `Teacher with <strong>ID: ${teacherid}</strong> added attendence of <strong>Class:${classs} Section:${section} </strong>`;
   const query = `INSERT INTO admin_logs (log_message,time) values ('${des}','${time}')`;
-  const attendance=req.body
+  const attendance = req.body
   const query1 = `INSERT INTO attendance (fk_student_id, attendance,date) VALUES ${attendance.map(() => '(?,?,?)').join(', ')}`;
   const values = attendance.flatMap((attendance) => [attendance.student_id, attendance.attendance, attendance.date]);
   try {
@@ -347,7 +359,7 @@ app.post('/progress/:time/:id/:class/:section', async (req, res) => {
   const des = `Teacher with <strong>ID: ${school_id}</strong> added Progress report of <strong>Class:${classs} Section:${section} </strong>`;
   const query1 = `INSERT INTO admin_logs (log_message,time) values ('${des}','${time}')`;
   const query = `INSERT INTO progress_report (fk_student_id, progress_grade, subject,date) VALUES ${data.map(() => '(?,?,?,?)').join(', ')}`;
-  const values = data.flatMap(item => [item.fk_student_id, item.progress_grade, item.subject,item.date]);
+  const values = data.flatMap(item => [item.fk_student_id, item.progress_grade, item.subject, item.date]);
   console.log(data)
   try {
     const [results] = await pool.execute(query, values);
@@ -365,15 +377,15 @@ app.post('/every/:teacher/:time/:class/:section', async (req, res) => {
   const classs = req.params.class
   const section = req.params.section
   const time = req.params.time
-  const daa=req.body;
+  const daa = req.body;
   const des = `Teacher with <strong>ID: ${teacher_id}</strong> added Notice for Every Student <strong>Class:${classs} Section:${section} </strong>`;
   const query1 = `INSERT INTO admin_logs (log_message,time) values ('${des}','${time}')`;
-  
+
   const query = `INSERT INTO notices (fk_student_id, notice_description,notice_status,notice_date) VALUES ${daa.map(() => '(?,?,?,?)').join(', ')} `;
-  const values = daa.flatMap(item => [item.fk_student_id, item.notice_description, item.notice_status,item.notice_date]);
-console.log(values)
+  const values = daa.flatMap(item => [item.fk_student_id, item.notice_description, item.notice_status, item.notice_date]);
+  console.log(values)
   try {
-    const [results] = await pool.execute(query,values);
+    const [results] = await pool.execute(query, values);
     const [results1] = await pool.execute(query1);
     res.send({ message: 'Attendance inserted successfully' });
 
@@ -429,7 +441,7 @@ app.post('/InsertDiary/:fk_section_id/:subject/:subject_diary/:date/:id/:time/:c
   const time = req.params.time;
   const classs = req.params.class;
   const section = req.params.section;
-   console.log('TIME '+time);
+  console.log('TIME ' + time);
   const des = `Teacher with <strong>ID: ${schoolid}</strong> added Home Work Diary of <strong>Class:${classs} Section:${section} </strong>`;
   const query = `INSERT INTO homework_diary (fk_section_id,subject,subject_diary,date) VALUES (${fk_section_id},'${subject}','${subject_diary}','${time}') `;
   const query1 = `INSERT INTO admin_logs (log_message,time) values ('${des}','${date}')`;
@@ -450,7 +462,7 @@ app.get('/teacherprofile/:schoolid', async (req, res) => {
   const query = `SELECT * FROM teacher_profile where teacher_id='${school_id}'`
   try {
     const [result] = await pool.execute(query)
-    result.map((data)=>{
+    result.map((data) => {
       const datastring = `'${data.dob}'`
       const dateObj = new Date(datastring);
       const formattedDate = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
@@ -467,7 +479,7 @@ app.get('/fetchnotice/:student_id', async (req, res) => {
   const query = `SELECT notice_description,notice_date,mark_read,notice_id,fk_student_id,notice_status from notices where fk_student_id=${student_id}`
   try {
     const [result] = await pool.execute(query)
-      result.map((data)=>{
+    result.map((data) => {
       const datastring = `'${data.notice_date}'`
       const dateObj = new Date(datastring);
       const formattedDate = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
@@ -480,11 +492,11 @@ app.get('/fetchnotice/:student_id', async (req, res) => {
   }
 })
 app.get('/fetchnotice/notice/:id', async (req, res) => {
- const data=req.params.id
+  const data = req.params.id
   const query = `SELECT notice_description,notice_date,mark_read,notice_id,fk_student_id,notice_status from notices where notice_status="${data}"`
   try {
     const [result] = await pool.execute(query)
-      result.map((data)=>{
+    result.map((data) => {
       const datastring = `'${data.notice_date}'`
       const dateObj = new Date(datastring);
       const formattedDate = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
@@ -502,7 +514,7 @@ app.post('/fetchnotice/:student_id/:notice_id', async (req, res) => {
   const query = `UPDATE notices SET mark_read=1 where fk_student_id=${student_id} AND notice_id=${notice_id}`
   try {
     const [result] = await pool.execute(query)
-      result.map((data)=>{
+    result.map((data) => {
       const datastring = `'${data.notice_date}'`
       const dateObj = new Date(datastring);
       const formattedDate = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
@@ -514,6 +526,10 @@ app.post('/fetchnotice/:student_id/:notice_id', async (req, res) => {
     console.log(error)
   }
 })
-app.listen(3000, () => {
-  console.log("ITS runing")
-})
+
+// Use the router to handle requests to the `/.netlify/functions/api` path
+router.use(`/.netlify/functions/api`, app);
+
+// Export the app and the serverless function
+module.exports = router;
+module.exports.handler = serverless(router);
