@@ -18,7 +18,20 @@ const dbConfig = {
 };
 const upload = multer({ dest: 'uploads/fees' }); // Temporary storage
 app.use(cors()); // Enable CORS
+const pool = mysql.createPool(dbConfig);
 
+async function checkConnection() {
+  try {
+    const connection = await pool.getConnection();
+    await connection.ping();
+    console.log('Database connection is active');
+    connection.release(); // Release the connection back to the pool
+  } catch (err) {
+    console.error('Error pinging database:', err);
+  }
+}
+
+checkConnection();
 const ftpConfig = {
   host: process.env.FHOST,
   user: process.env.FUSER,
@@ -65,7 +78,6 @@ app.post('/upload', upload.single('image'), (req, res) => {
 });
 
 
-const pool = mysql.createPool(dbConfig);
 JWT_SECRET = " dvabjhvnksdm!!!vmdfbsdvjbnsdrfnghweng"
 
 
@@ -283,22 +295,24 @@ const pass=req.params.pass;
     res.status(500).json({ message: 'Error fetching users' });
   }
 })
-app.get('/showclass/:class_name/:section_name', async (req, res) => {
+app.get('/showclass/:class_name/:section_name/:client', async (req, res) => {
   const cname = req.params.class_name;
   const section_name = req.params.section_name;
+  const client=req.params.client
   try {
-    const [results] = await pool.execute(`  SELECT roll_no ,name,student_id,section_id FROM all_classes INNER JOIN class_sections ON all_classes.class_id = class_sections.fk_class_id INNER JOIN student_class ON class_sections.section_id = student_class.fk_section_id INNER JOIN student_profile ON student_class.fk_student_id = student_profile.student_id WHERE class_name =${cname} AND section_name='${section_name}' `);
+    const [results] = await pool.execute(`  SELECT roll_no ,name,student_id,section_id FROM all_classes INNER JOIN class_sections ON all_classes.class_id = class_sections.fk_class_id INNER JOIN student_class ON class_sections.section_id = student_class.fk_section_id INNER JOIN student_profile ON student_class.fk_student_id = student_profile.student_id WHERE class_name =${cname} AND section_name='${section_name}' AND student_profile.fk_client_id='${client}' `);
     res.json(results);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error fetching users' });
   }
 })
-app.get('/diary/:class_name/:section_name', async (req, res) => {
+app.get('/diary/:class_name/:section_name/:client', async (req, res) => {
   const cname = req.params.class_name;
   const section_name = req.params.section_name;
+  const client = req.params.client;
   try {
-    const [results] = await pool.execute(`SELECT section_id FROM class_sections WHERE fk_class_id=${cname} AND section_name='${section_name}'`);
+    const [results] = await pool.execute(`SELECT section_id FROM class_sections WHERE fk_class_id=${cname} AND section_name='${section_name}' AND fk_client_id='${client}'`);
     res.json(results);
   } catch (error) {
     console.error(error);
@@ -318,16 +332,19 @@ app.post('/insertattendance', async (req, res) => {
     res.status(500).send({ message: 'Error inserting attendance' });
   }
 });
-app.post('/insertattendance/:id/:time/:class/:section', async (req, res) => {
+app.post('/insertattendance/:id/:time/:class/:section/:client', async (req, res) => {
   const teacherid = req.params.id;
   const time = req.params.time;
   const classs = req.params.class;
   const section = req.params.section;
+  const client = req.params.client;
+  console.log(client);
   const des = `Teacher with <strong>ID: ${teacherid}</strong> added attendence of <strong>Class:${classs} Section:${section} </strong>`;
-  const query = `INSERT INTO admin_logs (log_message,time) values ('${des}','${time}')`;
+  const query = `INSERT INTO admin_logs (log_message,time,fk_client_id) values ('${des}','${time}','${client}')`;
   const attendance=req.body
-  const query1 = `INSERT INTO attendance (fk_student_id, attendance,date) VALUES ${attendance.map(() => '(?,?,?)').join(', ')}`;
-  const values = attendance.flatMap((attendance) => [attendance.student_id, attendance.attendance, attendance.date]);
+  const query1 = `INSERT INTO attendance (fk_student_id, attendance,date,fk_client_id) VALUES ${attendance.map(() => '(?,?,?,?)').join(', ')}`;
+  const values = attendance.flatMap((attendance) => [attendance.student_id, attendance.attendance, attendance.date, attendance.fk_client_id]);
+  console.log(values);
   try {
     const [results] = await pool.execute(query);
     const [results1] = await pool.execute(query1, values);
@@ -338,16 +355,17 @@ app.post('/insertattendance/:id/:time/:class/:section', async (req, res) => {
     res.status(500).send({ message: 'Error inserting attendance' });
   }
 });
-app.post('/progress/:time/:id/:class/:section', async (req, res) => {
+app.post('/progress/:time/:id/:class/:section/:client', async (req, res) => {
   const data = req.body;
   const classs = req.params.class
   const section = req.params.section
   const time = req.params.time
   const school_id = req.params.id
+  const client = req.params.client
   const des = `Teacher with <strong>ID: ${school_id}</strong> added Progress report of <strong>Class:${classs} Section:${section} </strong>`;
-  const query1 = `INSERT INTO admin_logs (log_message,time) values ('${des}','${time}')`;
-  const query = `INSERT INTO progress_report (fk_student_id, progress_grade, subject,date) VALUES ${data.map(() => '(?,?,?,?)').join(', ')}`;
-  const values = data.flatMap(item => [item.fk_student_id, item.progress_grade, item.subject,item.date]);
+  const query1 = `INSERT INTO admin_logs (log_message,time,fk_client_id) values ('${des}','${time}','${client}')`;
+  const query = `INSERT INTO progress_report (fk_student_id, progress_grade, subject,date,fk_client_id) VALUES ${data.map(() => '(?,?,?,?,?)').join(', ')}`;
+  const values = data.flatMap(item => [item.fk_student_id, item.progress_grade, item.subject,item.date,item.fk_client_id]);
   console.log(data)
   try {
     const [results] = await pool.execute(query, values);
@@ -360,17 +378,18 @@ app.post('/progress/:time/:id/:class/:section', async (req, res) => {
   }
 
 });
-app.post('/every/:teacher/:time/:class/:section', async (req, res) => {
+app.post('/every/:teacher/:time/:class/:section/:client', async (req, res) => {
   const teacher_id = req.params.teacher;
   const classs = req.params.class
   const section = req.params.section
   const time = req.params.time
   const daa=req.body;
-  const des = `Teacher with <strong>ID: ${teacher_id}</strong> added Notice for Every Student <strong>Class:${classs} Section:${section} </strong>`;
-  const query1 = `INSERT INTO admin_logs (log_message,time) values ('${des}','${time}')`;
+  const client=req.params.client;
+  const des = `Teacher with <strong>ID: ${teacher_id}</strong> and <strong>Client ID: ${client}</strong> added Notice for Every Student <strong>Class:${classs} Section:${section} </strong>`;
+  const query1 = `INSERT INTO admin_logs (log_message,time,fk_client_id) values ('${des}','${time}','${client}')`;
   
-  const query = `INSERT INTO notices (fk_student_id, notice_description,notice_status,notice_date) VALUES ${daa.map(() => '(?,?,?,?)').join(', ')} `;
-  const values = daa.flatMap(item => [item.fk_student_id, item.notice_description, item.notice_status,item.notice_date]);
+  const query = `INSERT INTO notices (fk_student_id, notice_description,notice_status,notice_date,fk_client_id) VALUES ${daa.map(() => '(?,?,?,?,?)').join(', ')} `;
+  const values = daa.flatMap(item => [item.fk_student_id, item.notice_description, item.notice_status,item.notice_date,item.fk_client_id]);
 console.log(values)
   try {
     const [results] = await pool.execute(query,values);
@@ -397,7 +416,7 @@ app.post('/insertreport', async (req, res) => {
     res.status(500).send({ message: 'Error inserting attendance' });
   }
 });
-app.post('/specific/:id/:name/:report/:time/:specific/:teacher/:time/:class/:section', async (req, res) => {
+app.post('/specific/:id/:name/:report/:time/:specific/:teacher/:time/:class/:section/:client', async (req, res) => {
   const fk_student_id = req.params.id;
   const notice_description = `From Teacher:${req.params.name} ${req.params.report}`
   const notice_date = req.params.time;
@@ -406,9 +425,10 @@ app.post('/specific/:id/:name/:report/:time/:specific/:teacher/:time/:class/:sec
   const time = req.params.time
   const classs = req.params.class
   const section = req.params.section
-  const des = `Teacher with <strong>ID: ${teacher_id}</strong> added Notice of Student_id ${fk_student_id}<strong>Class:${classs} Section:${section} </strong>`;
-  const query1 = `INSERT INTO admin_logs (log_message,time) values ('${des}','${time}')`;
-  const query = `INSERT INTO notices (fk_student_id, notice_description,notice_status,notice_date) VALUES (${fk_student_id},'${notice_description}','${notice_status}','${notice_date}') `;
+  const client = req.params.client
+  const des = `Teacher with <strong>ID: ${teacher_id}</strong> and <strong>Client ID: ${client}</strong> added Notice of Student_id ${fk_student_id}<strong>Class:${classs} Section:${section} </strong>`;
+  const query1 = `INSERT INTO admin_logs (log_message,time,fk_client_id) values ('${des}','${time}','${client}')`;
+  const query = `INSERT INTO notices (fk_student_id, notice_description,notice_status,notice_date,fk_client_id) VALUES (${fk_student_id},'${notice_description}','${notice_status}','${notice_date}','${client}') `;
 
   try {
     const [results] = await pool.execute(query);
@@ -420,7 +440,7 @@ app.post('/specific/:id/:name/:report/:time/:specific/:teacher/:time/:class/:sec
     res.status(500).send({ message: 'Error inserting attendance' });
   }
 });
-app.post('/InsertDiary/:fk_section_id/:subject/:subject_diary/:date/:id/:time/:class/:section', async (req, res) => {
+app.post('/InsertDiary/:fk_section_id/:subject/:subject_diary/:date/:id/:time/:class/:section/:Client', async (req, res) => {
   const fk_section_id = req.params.fk_section_id;
   const subject_diary = req.params.subject_diary;
   const subject = req.params.subject;
@@ -429,10 +449,11 @@ app.post('/InsertDiary/:fk_section_id/:subject/:subject_diary/:date/:id/:time/:c
   const time = req.params.time;
   const classs = req.params.class;
   const section = req.params.section;
+  const cl = req.params.Client;
    console.log('TIME '+time);
-  const des = `Teacher with <strong>ID: ${schoolid}</strong> added Home Work Diary of <strong>Class:${classs} Section:${section} </strong>`;
-  const query = `INSERT INTO homework_diary (fk_section_id,subject,subject_diary,date) VALUES (${fk_section_id},'${subject}','${subject_diary}','${time}') `;
-  const query1 = `INSERT INTO admin_logs (log_message,time) values ('${des}','${date}')`;
+  const des = `Teacher with <strong>ID: ${schoolid}</strong> <strong>Client ID: ${cl}</strong> added Home Work Diary of <strong>Class:${classs} Section:${section} </strong>`;
+  const query = `INSERT INTO homework_diary (fk_section_id,subject,subject_diary,date,fk_client_id) VALUES (${fk_section_id},'${subject}','${subject_diary}','${time}','${cl}') `;
+  const query1 = `INSERT INTO admin_logs (log_message,time,fk_client_id) values ('${des}','${date}','${cl}')`;
 
   try {
     const [results] = await pool.execute(query);
@@ -479,9 +500,10 @@ app.get('/fetchnotice/:student_id', async (req, res) => {
     console.log(error)
   }
 })
-app.get('/fetchnotice/notice/:id', async (req, res) => {
+app.get('/fetchnotice/notice/:id/:client_ID', async (req, res) => {
  const data=req.params.id
-  const query = `SELECT notice_description,notice_date,mark_read,notice_id,fk_student_id,notice_status from notices where notice_status="${data}"`
+ const client=req.params.client_ID
+  const query = `SELECT notice_description,notice_date,mark_read,notice_id,fk_student_id,notice_status from notices where notice_status="${data}" AND fk_client_id=${client}`
   try {
     const [result] = await pool.execute(query)
       result.map((data)=>{
