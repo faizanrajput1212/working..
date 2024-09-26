@@ -144,7 +144,7 @@ const pass=req.params.pass;
     const [results] = await pool.execute(`SELECT * FROM teacher_profile WHERE school_id='${id}' AND phone_no='${phone}' AND password='${pass}'`);
     if(results.length>0){
         results.map((data)=>{
-          data.image=`https://codesmine.net/uploads/teachers-profile/${data.image}`
+          data.image=`https://myschoolsystem.net/uploads/teachers-profile/${data.image}`
       })
     }
     res.json(results)
@@ -348,7 +348,7 @@ const pass=req.params.pass;
     const [results] = await pool.execute(`SELECT * FROM student_profile WHERE roll_no='${id}' AND mobile_no='${phone}' AND password='${pass}'`);
      if(results.length>0){
         results.map((data)=>{
-          data.image=`https://codesmine.net/uploads/students-profile/${data.image}`
+          data.image=`https://myschoolsystem.net/uploads/students-profile/${data.image}`
       })
     }
     res.json(results)
