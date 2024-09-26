@@ -11,10 +11,10 @@ const fs = require('fs');
 app.use(express.json());
 
 const dbConfig = {
-  host:'77.37.35.21',
-  user:'u650672385_ghulam_murtaza',
-  password:'ghulam_Murtaza123!@#',
-  database:'u650672385_myschool_db'
+  host: process.env.HOST,
+  user: process.env.USER,
+  password: process.env.PASSWORD,
+  database: process.env.DATABASE
 };
 const upload = multer({ dest: 'uploads/fees' }); // Temporary storage
 app.use(cors()); // Enable CORS
