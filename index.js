@@ -11,12 +11,11 @@ const fs = require('fs');
 app.use(express.json());
 
 const dbConfig = {
-  host:process.env.HOST,
-  user:process.env.USER,
-  password:process.env.PASSWORD,
-  database:process.env.DATABASE
+  host:'77.37.35.21',
+  user:'u650672385_ghulam_murtaza',
+  password:'ghulam_Murtaza123!@#',
+  database:'u650672385_myschool_db'
 };
-
 const upload = multer({ dest: 'uploads/fees' }); // Temporary storage
 app.use(cors()); // Enable CORS
 const pool = mysql.createPool(dbConfig);
@@ -215,6 +214,15 @@ app.get('/trial/:client/:id', async (req, res) => {
   const stdclient = (req.params.client);
   try {
     const [results] = await pool.execute(`SELECT * FROM student_trials WHERE fk_client_id=${stdclient} and fk_student_id=${stdid}`);
+    if(results.length>0){
+      results.map((data)=>{
+        const datastring = `'${data.trial_expiry}'`
+        const dateObj = new Date(datastring);
+        const formattedDate = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
+        console.log(formattedDate);
+        data.trial_expiry = formattedDate;
+      })
+    }
     res.json(results);
   } catch (error) {
     console.error(error);
@@ -227,6 +235,25 @@ app.get('/BUY/:client/:id/:date', async (req, res) => {
   const expiry = (req.params.date);
   try {
     const [results] = await pool.execute( `INSERT INTO student_trials (fk_client_id,fk_student_id,trial_expiry) values ('${stdclient}','${stdid}','${expiry}')`);
+    res.json(results);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching users' });
+  }
+})
+app.get('/school/:client/:id', async (req, res) => {
+  const stdclient = (req.params.client);
+  try {
+    const [results] = await pool.execute( `select * from student_trials where fk_student_id =${req.params.id} AND fk_client_id =${req.params.client}` );
+    if(results.length>0){
+      results.map((data)=>{
+        const datastring = `'${data.trial_expiry}'`
+        const dateObj = new Date(datastring);
+        const formattedDate = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
+        console.log(formattedDate);
+        data.trial_expiry = formattedDate;
+      })
+    }
     res.json(results);
   } catch (error) {
     console.error(error);
