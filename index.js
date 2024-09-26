@@ -11,11 +11,12 @@ const fs = require('fs');
 app.use(express.json());
 
 const dbConfig = {
-  host: process.env.HOST,
-  user: process.env.USER,
-  password: process.env.PASSWORD,
-  database: process.env.DATABASE
+  host:process.env.HOST,
+  user:process.env.USER,
+  password:process.env.PASSWORD,
+  database:process.env.DATABASE
 };
+
 const upload = multer({ dest: 'uploads/fees' }); // Temporary storage
 app.use(cors()); // Enable CORS
 const pool = mysql.createPool(dbConfig);
@@ -192,6 +193,40 @@ app.get('/student/timetable/:id', async (req, res) => {
   const stdid = (req.params.id);
   try {
     const [results] = await pool.execute(`SELECT * FROM timetable INNER JOIN periods ON timetable.timetable_id = periods.fk_timetable_id WHERE timetable.fk_section_id=${stdid};`);
+    res.json(results);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching users' });
+  }
+})
+app.get('/subscription/:client/:id', async (req, res) => {
+  const stdid = (req.params.id);
+  const stdclient = (req.params.client);
+  try {
+    const [results] = await pool.execute(`SELECT * FROM student_subscriptions WHERE fk_client_id=${stdclient} and fk_student_id=${stdid}`);
+    res.json(results);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching users' });
+  }
+})
+app.get('/trial/:client/:id', async (req, res) => {
+  const stdid = (req.params.id);
+  const stdclient = (req.params.client);
+  try {
+    const [results] = await pool.execute(`SELECT * FROM student_trials WHERE fk_client_id=${stdclient} and fk_student_id=${stdid}`);
+    res.json(results);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching users' });
+  }
+})
+app.get('/BUY/:client/:id/:date', async (req, res) => {
+  const stdid = (req.params.id);
+  const stdclient = (req.params.client);
+  const expiry = (req.params.date);
+  try {
+    const [results] = await pool.execute( `INSERT INTO student_trials (fk_client_id,fk_student_id,trial_expiry) values ('${stdclient}','${stdid}','${expiry}')`);
     res.json(results);
   } catch (error) {
     console.error(error);
