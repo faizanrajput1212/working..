@@ -640,7 +640,8 @@ app.get('/teacherprofile/:schoolid', async (req, res) => {
       const datastring = `'${data.dob}'`
       const dateObj = new Date(datastring);
       const formattedDate = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
-      data.date = formattedDate
+      data.date = formattedDate;
+      data.image=`https://myschoolsystem.net/uploads/teachers-profile/${data.image}`
     })
     res.json(result)
   } catch (error) {
