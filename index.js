@@ -17,7 +17,8 @@ const dbConfig = {
   password: process.env.PASSWORD,
   database: process.env.DATABASE,
 };
-const upload = multer({ dest: 'uploads/fees' }); // Temporary storage
+const storage = multer.memoryStorage(); // Store files in memory
+const upload = multer({ storage });
 app.use(cors()); // Enable CORS
 const pool = mysql.createPool(dbConfig);
 
@@ -57,25 +58,33 @@ checkFtpConnection();
 
 
 app.post('/upload', upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+
   const client = new FTPClient();
 
-  client.connect(ftpConfig);
   client.on('ready', () => {
-    const localFilePath = path.join(__dirname, req.file.path);
-    const remoteFilePath = `/public_html/uploads/fees/${req.file.originalname}`;
-    client.put(localFilePath, remoteFilePath, (err) => {
-      if (err) {
-        return res.status(500).send('Error uploading file');
-      }
+    const remotePath = `/uploads/fees/${req.file.originalname}`; // Set your remote path
 
-      res.send('File uploaded successfully');
+    // Upload the file from memory
+    client.put(req.file.buffer, remotePath, (err) => {
+      if (err) {
+        console.error('Error uploading to FTP:', err);
+        return res.status(500).send('Error uploading file to FTP.');
+      }
+      console.log('File uploaded to FTP successfully:', remotePath);
+      client.end(); // Close the connection
+      return res.status(200).send(`File uploaded successfully: ${req.file.originalname}`);
     });
   });
 
   client.on('error', (err) => {
-    console.error('FTP error:', err);
-    res.status(500).send('FTP connection error');
+    console.error('FTP connection error:', err);
+    return res.status(500).send('FTP connection error.');
   });
+
+  client.connect(ftpConfig);
 });
 
 
@@ -657,7 +666,7 @@ app.get('/fetchnotice/:clientid', async (req, res) => {
 app.get('/fetchnotice/notice/:id/:client_ID', async (req, res) => {
   const data = req.params.id
   const client = req.params.client_ID
-  const query = `SELECT notice_description,notice_date,mark_read,notice_id,fk_student_id,notice_status from notices where notice_status="${data}" AND fk_client_id=${client}`
+  const query = `SELECT notice_description,notice_date,mark_read,notice_id,fk_student_id,fk_client_id,notice_status from notices where fk_student_id="${data}" AND fk_client_id=${client}`
   try {
     const [result] = await pool.execute(query)
     result.map((data) => {
@@ -666,6 +675,17 @@ app.get('/fetchnotice/notice/:id/:client_ID', async (req, res) => {
       const formattedDate = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
       data.notice_date = formattedDate
     })
+    res.json(result)
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching users' });
+    console.log(error)
+  }
+})
+app.get('/funds/:id', async (req, res) => {
+  const data = req.params.id
+  const query = `SELECT fund_title,fund_amount from student_funds where fk_fee_id="${data}" `
+  try {
+    const [result] = await pool.execute(query)
     res.json(result)
   } catch (error) {
     res.status(500).json({ message: 'Error fetching users' });
@@ -691,6 +711,6 @@ app.post('/fetchnotice/:student_id/:notice_id', async (req, res) => {
     console.log(error)
   }
 })
-app.listen(3000, () => {
+app.listen(4000, () => {
   console.log("ITS runing")
 })
