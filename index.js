@@ -99,6 +99,9 @@ app.get('/authentication/:id', async (req, res) => {
     return res.send({ status: 'ok', mine: token })
   }
 })
+app.get('/', async (req, res) => {
+ res.status(200).send("Server Running")
+})
 app.get('/api/fees/:id/:client', async (req, res) => {
   const fk_student_id = req.params.id;
   const client = req.params.client;
