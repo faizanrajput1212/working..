@@ -229,9 +229,6 @@ app.get('/progressstudent/:id', async (req, res) => {
     res.status(500).json({ message: 'Error fetching users' });
   }
 })
-app.get('/', async (req, res) => {
- res.send("Hello")
-})
 
 app.get('/student/timetable/:id', async (req, res) => {
   const stdid = (req.params.id);
@@ -418,18 +415,20 @@ app.get('/attendance/:id', async (req, res) => {
     res.status(500).json({ message: 'Error fetching users' });
   }
 })
-app.get('/section', async (req, res) => {
+app.get('/section/:clientid', async (req, res) => {
+  const clientid=req.params.clientid;
   try {
-    const [results] = await pool.execute(`select * from all_classes INNER JOIN class_sections ON all_classes.class_id=class_sections.fk_class_id`);
+    const [results] = await pool.execute(`select * from all_classes INNER JOIN class_sections ON all_classes.class_id=class_sections.fk_class_id where all_classes.fk_client_id=${clientid}`);
     res.json(results);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error fetching users' });
   }
 })
-app.get('/class', async (req, res) => {
+app.get('/class/:clientid', async (req, res) => {
+  const clientid=req.params.clientid;
   try {
-    const [results] = await pool.execute(`select * from all_classes `);
+    const [results] = await pool.execute(`select * from all_classes where fk_client_id=${clientid}`);
     res.json(results);
   } catch (error) {
     console.error(error);
@@ -465,7 +464,7 @@ app.get('/showclass/:class_name/:section_name/:client', async (req, res) => {
   const section_name = req.params.section_name;
   const client = req.params.client
   try {
-    const [results] = await pool.execute(`  SELECT roll_no ,name,student_id,section_id FROM all_classes INNER JOIN class_sections ON all_classes.class_id = class_sections.fk_class_id INNER JOIN student_class ON class_sections.section_id = student_class.fk_section_id INNER JOIN student_profile ON student_class.fk_student_id = student_profile.student_id WHERE class_name =${cname} AND section_name='${section_name}' AND student_profile.fk_client_id='${client}' `);
+    const [results] = await pool.execute(`  SELECT roll_no ,name,student_id,section_id FROM all_classes INNER JOIN class_sections ON all_classes.class_id = class_sections.fk_class_id INNER JOIN student_class ON class_sections.section_id = student_class.fk_section_id INNER JOIN student_profile ON student_class.fk_student_id = student_profile.student_id WHERE class_name ='${cname}' AND section_name='${section_name}' AND student_profile.fk_client_id='${client}' `);
     res.json(results);
   } catch (error) {
     console.error(error);
@@ -640,9 +639,36 @@ app.get('/teacherprofile/:schoolid', async (req, res) => {
       const datastring = `'${data.dob}'`
       const dateObj = new Date(datastring);
       const formattedDate = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
-      data.date = formattedDate;
+      data.date = formattedDate
       data.image=`https://myschoolsystem.net/uploads/teachers-profile/${data.image}`
     })
+    res.json(result)
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching users' });
+    console.log(error)
+  }
+})
+
+app.get('/classid/:classname/:client', async (req, res) => {
+  const classname = req.params.classname;
+  const client = req.params.client;
+  const query = `SELECT * FROM all_classes where class_name='${classname}' and fk_client_id='${client}'`
+  try {
+    const [result] = await pool.execute(query)
+    res.json(result)
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching users' });
+    console.log(error)
+  }
+})
+app.get('/progress/:stdid/:subject/:client', async (req, res) => {
+  const studentid = req.params.stdid;
+  const subject = req.params.subject;
+  const date = new Date();
+  const cuurentdate=`${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+  const client = req.params.client;
+  try {
+    const [result] = await pool.execute(`SELECT * FROM progress_report where fk_student_id='${studentid}' and fk_client_id='${client}' and subject=${subject} and date=${cuurentdate}`)
     res.json(result)
   } catch (error) {
     res.status(500).json({ message: 'Error fetching users' });
@@ -715,6 +741,6 @@ app.post('/fetchnotice/:student_id/:notice_id', async (req, res) => {
     console.log(error)
   }
 })
-app.listen(3000, () => {
-  console.log("ITS runing at port")
+app.listen(4000, () => {
+  console.log("ITS runing")
 })
