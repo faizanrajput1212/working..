@@ -741,6 +741,6 @@ app.post('/fetchnotice/:student_id/:notice_id', async (req, res) => {
     console.log(error)
   }
 })
-app.listen(4000, () => {
+app.listen(3000, () => {
   console.log("ITS runing")
 })
