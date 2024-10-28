@@ -14,8 +14,8 @@ JWT_SECRET = 'vsjvdvjsnaifhgubwregevhbvdhbvnbdvbhbhbhb'
 const dbConfig = {
   host: process.env.HOST,
   user: process.env.USER,
-  password: process.env.PASSWORD,
   database: process.env.DATABASE,
+  password: process.env.PASSWORD
 };
 const storage = multer.memoryStorage(); // Store files in memory
 const upload = multer({ storage });
@@ -124,7 +124,7 @@ app.get('/schoolname/:id', async (req, res) => {
   const client_id = req.params.id;
   console.log("School name: " + client_id);
   try {
-    const [results] = await pool.execute(`SELECT * FROM school_profile_ WHERE client_id=${client_id};`);
+    const [results] = await pool.execute(`SELECT * FROM school_profile_ WHERE client_id=${client_id}`);
     if(results.length>0){
       results.map((data)=>{
         data.image=`https://myschoolsystem.net/uploads/school-profile-uploads/${data.image}`
@@ -443,13 +443,13 @@ app.get('/api/studentlogin/:id/:phone/:pass', async (req, res) => {
   try {
     // Use a parameterized query to prevent SQL injection
     const [results] = await pool.execute(`SELECT * FROM student_profile WHERE roll_no = ? AND mobile_no = ? AND password = ?`, [id, phone, pass]);
-    console.log(results);
     if (results.length > 0) {
       // Modify the image URL (if necessary)
       results.forEach((data) => {
         data.image = `https://myschoolsystem.net/uploads/students-profile/${data.image}`;
       });
-
+      console.log(results);
+      
       res.json(results);
     } else {
       res.status(404).json({ message: 'Student not found' });
@@ -464,7 +464,8 @@ app.get('/showclass/:class_name/:section_name/:client', async (req, res) => {
   const section_name = req.params.section_name;
   const client = req.params.client
   try {
-    const [results] = await pool.execute(`  SELECT roll_no ,name,student_id,section_id FROM all_classes INNER JOIN class_sections ON all_classes.class_id = class_sections.fk_class_id INNER JOIN student_class ON class_sections.section_id = student_class.fk_section_id INNER JOIN student_profile ON student_class.fk_student_id = student_profile.student_id WHERE class_name ='${cname}' AND section_name='${section_name}' AND student_profile.fk_client_id='${client}' `);
+    const [results] = await pool.execute(` SELECT roll_no ,name,student_id,section_id FROM all_classes INNER JOIN class_sections ON all_classes.class_id = class_sections.fk_class_id INNER JOIN student_class ON class_sections.section_id = student_class.fk_section_id INNER JOIN student_profile ON student_class.fk_student_id = student_profile.student_id WHERE class_name ='${cname}' AND section_name='${section_name}' AND student_profile.fk_client_id='${client}' `);
+    console.log(results);
     res.json(results);
   } catch (error) {
     console.error(error);
@@ -530,7 +531,7 @@ app.post('/progress/:time/:id/:class/:section/:client', async (req, res) => {
   const query1 = `INSERT INTO admin_logs (log_message,time,fk_client_id) values ('${des}','${time}','${client}')`;
   const query = `INSERT INTO progress_report (fk_student_id, progress_grade, subject,date,fk_client_id) VALUES ${data.map(() => '(?,?,?,?,?)').join(', ')}`;
   const values = data.flatMap(item => [item.fk_student_id, item.progress_grade, item.subject, item.date, item.fk_client_id]);
-  console.log(data)
+
   try {
     const [results] = await pool.execute(query, values);
     const [results1] = await pool.execute(query1);
@@ -604,17 +605,16 @@ app.post('/specific/:id/:name/:report/:time/:specific/:teacher/:time/:class/:sec
     res.status(500).send({ message: 'Error inserting attendance' });
   }
 });
-app.post('/InsertDiary/:fk_section_id/:subject/:subject_diary/:date/:id/:time/:class/:section/:Client', async (req, res) => {
+app.post('/InsertDiary/:fk_section_id/:subject/:subject_diary/:date/:id/:class/:section/:Client/:current', async (req, res) => {
   const fk_section_id = req.params.fk_section_id;
   const subject_diary = req.params.subject_diary;
   const subject = req.params.subject;
   const date = req.params.date;
   const schoolid = req.params.id;
-  const time = req.params.time;
   const classs = req.params.class;
   const section = req.params.section;
   const cl = req.params.Client;
-  console.log('TIME ' + time);
+  const time = req.params.current;
   const des = `Teacher with <strong>ID: ${schoolid}</strong> <strong>Client ID: ${cl}</strong> added Home Work Diary of <strong>Class:${classs} Section:${section} </strong>`;
   const query = `INSERT INTO homework_diary (fk_section_id,subject,subject_diary,date,fk_client_id) VALUES (${fk_section_id},'${subject}','${subject_diary}','${time}','${cl}') `;
   const query1 = `INSERT INTO admin_logs (log_message,time,fk_client_id) values ('${des}','${date}','${cl}')`;
@@ -642,6 +642,20 @@ app.get('/teacherprofile/:schoolid', async (req, res) => {
       data.date = formattedDate
       data.image=`https://myschoolsystem.net/uploads/teachers-profile/${data.image}`
     })
+    res.json(result)
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching users' });
+    console.log(error)
+  }
+})
+app.get('/checkdiary/:subject/:date/:client/:section', async (req, res) => {
+  const subject = req.params.subject;
+  const date = req.params.date;
+  const client = req.params.client;
+  const section = req.params.section;
+  const query = `SELECT * FROM homework_diary WHERE fk_client_id=${client} and date='${date}' and subject='${subject}' and fk_section_id=${section} `
+  try {
+    const [result] = await pool.execute(query)
     res.json(result)
   } catch (error) {
     res.status(500).json({ message: 'Error fetching users' });
@@ -687,6 +701,7 @@ app.get('/fetchnotice/:clientid', async (req, res) => {
       const formattedDate = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
       data.notice_date = formattedDate
     })
+    result.sort((a, b) => new Date(b.notice_date) - new Date(a.notice_date));
     res.json(result)
   } catch (error) {
     res.status(500).json({ message: 'Error fetching users' });
@@ -704,7 +719,10 @@ app.get('/fetchnotice/notice/:id/:client_ID', async (req, res) => {
       const dateObj = new Date(datastring);
       const formattedDate = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
       data.notice_date = formattedDate
+
     })
+    result.sort((a, b) => new Date(b.notice_date) - new Date(a.notice_date));
+    console.log(result);
     res.json(result)
   } catch (error) {
     res.status(500).json({ message: 'Error fetching users' });
@@ -735,6 +753,87 @@ app.post('/fetchnotice/:student_id/:notice_id', async (req, res) => {
       const formattedDate = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
       data.notice_date = formattedDate
     })
+    res.json(result)
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching users' });
+    console.log(error)
+  }
+})
+app.get('/ProgressReport/:sectionid/:clientid/:date/:sub', async (req, res) => {
+ const date=req.params.date
+ const client=req.params.clientid
+ const section=req.params.sectionid
+ const subject=req.params.sub
+ console.log(subject);
+const singledate=(new Date(date).getDate());
+const month=new Date(date).getMonth()+1
+const year=new Date(date).getFullYear()
+ if(singledate<=7){
+  const query = `SELECT * FROM all_classes LEFT JOIN class_sections ON all_classes.class_id=class_sections.fk_class_id LEFT JOIN student_class ON class_sections.section_id=student_class.fk_section_id LEFT JOIN student_profile ON student_class.fk_student_id=student_profile.student_id LEFT JOIN progress_report ON student_profile.student_id=progress_report.fk_student_id WHERE student_class.fk_section_id=${section} AND student_class.fk_client_id=${client} AND progress_report.date between '${year}-${month}-1' and '${year}-${month}-8' AND progress_report.subject='${subject}' and progress_report.fk_student_id;`
+  try {
+    const [result] = await pool.execute(query)
+    res.json(result)
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching users' });
+    console.log(error)
+  }
+}else if(singledate<=14){
+  const query = `SELECT * FROM all_classes LEFT JOIN class_sections ON all_classes.class_id=class_sections.fk_class_id LEFT JOIN student_class ON class_sections.section_id=student_class.fk_section_id LEFT JOIN student_profile ON student_class.fk_student_id=student_profile.student_id LEFT JOIN progress_report ON student_profile.student_id=progress_report.fk_student_id WHERE student_class.fk_section_id=${section} AND student_class.fk_client_id=${client} AND progress_report.date between '${year}-${month}-8' and '${year}-${month}-15'AND progress_report.subject='${subject}' AND progress_report.fk_student_id;`
+  try {
+    const [result] = await pool.execute(query)
+    res.json(result)
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching users' });
+    console.log(error)
+  }
+ }
+else if(singledate<=21){
+  const query = `SELECT * FROM all_classes LEFT JOIN class_sections ON all_classes.class_id=class_sections.fk_class_id LEFT JOIN student_class ON class_sections.section_id=student_class.fk_section_id LEFT JOIN student_profile ON student_class.fk_student_id=student_profile.student_id LEFT JOIN progress_report ON student_profile.student_id=progress_report.fk_student_id WHERE student_class.fk_section_id=${section} AND student_class.fk_client_id=${client} AND progress_report.date between '${year}-${month}-15' and '${year}-${month}-22' AND progress_report.subject='${subject}' AND progress_report.fk_student_id;`
+  try {
+    const [result] = await pool.execute(query)
+    res.json(result)
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching users' });
+    console.log(error)
+  }
+}else{
+  const query = `SELECT * FROM all_classes LEFT JOIN class_sections ON all_classes.class_id=class_sections.fk_class_id LEFT JOIN student_class ON class_sections.section_id=student_class.fk_section_id LEFT JOIN student_profile ON student_class.fk_student_id=student_profile.student_id LEFT JOIN progress_report ON student_profile.student_id=progress_report.fk_student_id WHERE student_class.fk_section_id=${section} AND student_class.fk_client_id=${client} AND progress_report.date between '${year}-${month}-22' and '${year}-${month}-32' AND progress_report.subject='${subject}' AND progress_report.fk_student_id;`
+  try {
+    const [result] = await pool.execute(query)
+    res.json(result)
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching users' });
+    console.log(error)
+  }
+
+ }
+ 
+})
+app.get('/Attendence/:sectionid/:clientid/:date', async (req, res) => {
+ const date=req.params.date
+ const client=req.params.clientid
+ const section=req.params.sectionid
+
+ 
+  const query = `SELECT * FROM all_classes LEFT JOIN class_sections ON all_classes.class_id=class_sections.fk_class_id
+LEFT JOIN student_class ON class_sections.section_id=student_class.fk_section_id
+LEFT JOIN student_profile ON student_class.fk_student_id=student_profile.student_id 
+LEFT JOIN attendance ON student_profile.student_id=attendance.fk_student_id WHERE student_class.fk_section_id=${section} AND student_class.fk_client_id=${client} AND attendance.date='${date}' AND  attendance.fk_student_id`
+  try {
+    const [result] = await pool.execute(query)
+    res.json(result)
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching users' });
+    console.log(error)
+  }
+})
+app.get('/sectionid/:client/:classname/:sectionname', async (req, res) => {
+ const classname=req.params.classname
+ const client=req.params.client
+ const section=req.params.sectionname
+  const query = `select * from all_classes INNER JOIN class_sections ON all_classes.class_id=class_sections.fk_class_id where all_classes.fk_client_id=${client} and all_classes.class_name=${classname} and class_sections.section_name='${section}'`
+  try {
+    const [result] = await pool.execute(query)
     res.json(result)
   } catch (error) {
     res.status(500).json({ message: 'Error fetching users' });
