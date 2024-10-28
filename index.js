@@ -7,6 +7,7 @@ const multer = require('multer');
 const FTPClient = require('ftp');
 const path = require('path');
 const cors = require('cors');
+
 const fs = require('fs');
 app.use(express.json());
 
@@ -531,7 +532,7 @@ app.post('/progress/:time/:id/:class/:section/:client', async (req, res) => {
   const query1 = `INSERT INTO admin_logs (log_message,time,fk_client_id) values ('${des}','${time}','${client}')`;
   const query = `INSERT INTO progress_report (fk_student_id, progress_grade, subject,date,fk_client_id) VALUES ${data.map(() => '(?,?,?,?,?)').join(', ')}`;
   const values = data.flatMap(item => [item.fk_student_id, item.progress_grade, item.subject, item.date, item.fk_client_id]);
-
+  console.log(values)
   try {
     const [results] = await pool.execute(query, values);
     const [results1] = await pool.execute(query1);
