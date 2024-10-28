@@ -524,7 +524,7 @@ app.post('/insertattendance/:id/:time/:class/:section/:client', async (req, res)
 });
 app.post('/progress/:time/:id/:class/:section/:client', async (req, res) => {
   const data = req.body;
-  console.log(data)
+  console.log("Faizan "+data)
   const classs = req.params.class
   const section = req.params.section
   const time = req.params.time
