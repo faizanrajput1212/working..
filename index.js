@@ -681,9 +681,8 @@ app.get('/checkdiary/:subject/:date/:client/:section', async (req, res) => {
   const client = req.params.client;
   const section = req.params.section;
   const query = `SELECT * FROM homework_diary WHERE fk_client_id=? and date=? and subject=? and fk_section_id=? `
-  const data=[client,date,subject,section]
   try {
-    const [result] = await pool.execute(query,data)
+    const [result] = await pool.execute(query,[client,date,subject,section])
     res.json(result)
   } catch (error) {
     res.status(500).json({ message: 'Error fetching users' });
