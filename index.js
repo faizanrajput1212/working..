@@ -12,10 +12,10 @@ app.use(express.json());
 
 JWT_SECRET = 'vsjvdvjsnaifhgubwregevhbvdhbvnbdvbhbhbhb'
 const dbConfig = {
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: '_myschool_db',
+  host: process.env.HOST,
+  user:process.env.USER ,
+  password: process.env.PASSWORD,
+  database:process.env.DATABASE,
 };
 
 
