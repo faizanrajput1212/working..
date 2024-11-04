@@ -680,6 +680,7 @@ app.get('/checkdiary/:subject/:date/:client/:section', async (req, res) => {
   const date = req.params.date;
   const client = req.params.client;
   const section = req.params.section;
+  console.log(client+" "+date+" "+subject+" "+section)
   const query = `SELECT * FROM homework_diary WHERE fk_client_id=? and date=? and subject=? and fk_section_id=? `
   try {
     const [result] = await pool.execute(query,[client,date,subject,section])
