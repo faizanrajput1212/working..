@@ -631,7 +631,7 @@ app.post('/InsertDiary/:fk_section_id/:subject/:subject_diary/:date/:id/:class/:
   const query1 = `INSERT INTO admin_logs (log_message,time,fk_client_id) values (?,?,?)`;
 
   try {
-    const [results] = await pool.execute(query);
+    const [results] = await pool.execute(query,data);
     const [results1] = await pool.execute(query1,[des,date,cl]);
     res.send({ message: 'Attendance inserted successfully' });
 
