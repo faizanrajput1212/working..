@@ -17,8 +17,7 @@ const dbConfig = {
   password: '',
   database: '_myschool_db',
 };
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
 
 const storage = multer.memoryStorage(); // Store files in memory
 const upload = multer({ storage });
