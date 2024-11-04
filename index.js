@@ -13,9 +13,9 @@ app.use(express.json());
 JWT_SECRET = 'vsjvdvjsnaifhgubwregevhbvdhbvnbdvbhbhbhb'
 const dbConfig = {
   host: process.env.HOST,
-  user:process.env.USER ,
+  user: process.env.USER,
   password: process.env.PASSWORD,
-  database:process.env.DATABASE,
+  database: process.env.DATABASE,
 };
 
 
@@ -212,6 +212,7 @@ app.get('/studentprofile/:id/:client', async (req, res) => {
       data.image = `https://myschoolsystem.net/uploads/students-profile/${data.image}`;
     }
     )
+    console.log("CAll")
     res.json(results);
   } catch (error) {
     console.error(error);
@@ -567,7 +568,7 @@ const data=[des,time,client]
   console.log(values)
   try {
     const [results] = await pool.execute(query, values);
-    const [results1] = await pool.execute(query1);
+    const [results1] = await pool.execute(query1,data);
     res.send({ message: 'Attendance inserted successfully' });
 
   } catch (error) {
@@ -631,7 +632,7 @@ app.post('/InsertDiary/:fk_section_id/:subject/:subject_diary/:date/:id/:class/:
   const query1 = `INSERT INTO admin_logs (log_message,time,fk_client_id) values (?,?,?)`;
 
   try {
-    const [results] = await pool.execute(query,data);
+    const [results] = await pool.execute(query);
     const [results1] = await pool.execute(query1,[des,date,cl]);
     res.send({ message: 'Attendance inserted successfully' });
 
@@ -680,10 +681,22 @@ app.get('/checkdiary/:subject/:date/:client/:section', async (req, res) => {
   const date = req.params.date;
   const client = req.params.client;
   const section = req.params.section;
-  console.log(client+" "+date+" "+subject+" "+section)
   const query = `SELECT * FROM homework_diary WHERE fk_client_id=? and date=? and subject=? and fk_section_id=? `
+  const data=[client,data,subject,section]
   try {
-    const [result] = await pool.execute(query,[client,date,subject,section])
+    const [result] = await pool.execute(query,data)
+    res.json(result)
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching users' });
+    console.log(error)
+  }
+})
+app.get('/studentRecord/:studentid', async (req, res) => {
+  const studentid=req.params.studentid;
+  const query = `SELECT * FROM exam_result left join exam_title on exam_title.exam_title_id=exam_result.fk_exam_title_id left JOIN section_subjects on section_subjects.subject_id=exam_result.fk_subject_id where exam_result.fk_student_id=? `
+  try {
+    const [result] = await pool.execute(query,[studentid])
+    console.log(result)
     res.json(result)
   } catch (error) {
     res.status(500).json({ message: 'Error fetching users' });
@@ -877,6 +890,7 @@ app.get('/subjects/:section/:client', async (req, res) => {
   const client = req.params.client
   try {
     const [result] = await pool.execute(`select subject_name from section_subjects where fk_client_id=? and fk_section_id=?`, [client, section])
+    console.log(result)
     res.json(result)
   } catch (error) {
     res.status(500).json({ message: 'Error fetching users' });
@@ -897,22 +911,20 @@ app.get('/class/:section/:client', async (req, res) => {
 app.get('/Exam/:stdid', async (req, res) => {
   const stdid = req.params.stdid
   try {
-    const [studentid] = await pool.execute(`select fk_section_id from student_class where fk_student_id=?`, [stdid])
-    studentid.map(async (data) => {
-      const [result] = await pool.execute(`select * from exam_schedule left join section_subjects on exam_schedule.fk_subject_id=section_subjects.subject_id INNER join exam_title on exam_schedule.fk_exam_title_id=exam_title.exam_title_id where exam_schedule.fk_section_id=?`, [data.fk_section_id])
-      result.map((data) => {
-        const datastring = `'${data.exam_date}'`
-        const datastring1 = `'${data.submission_date}'`
-        const dateObj = new Date(datastring);
-        const dateObj1 = new Date(datastring1);
-        const formattedDate = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
-        const formattedDate1 = `${dateObj1.getFullYear()}-${(dateObj1.getMonth() + 1).toString().padStart(2, '0')}-${dateObj1.getDate().toString().padStart(2, '0')}`;
-        data.exam_date = formattedDate
-        data.submission_date = formattedDate1
-        data.month = `${(dateObj.getMonth() + 1).toString()}`
-      })
-      res.json(result)
+    
+    const [result] = await pool.execute(`select section_subjects.subject_name,exam_schedule.exam_date,exam_schedule.exam_time,exam_title.exam_title,exam_title.exam_title,exam_schedule.submission_date from exam_schedule inner join exam_title on exam_title.exam_title_id=exam_schedule.fk_exam_title_id left join section_subjects on section_subjects.subject_id=exam_schedule.fk_subject_id where exam_schedule.fk_section_id=?`, [stdid])
+    result.map((data) => {
+      const datastring = `'${data.exam_date}'`
+      const datastring1 = `'${data.submission_date}'`
+      const dateObj = new Date(datastring);
+      const dateObj1 = new Date(datastring1);
+      const formattedDate = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
+      const formattedDate1 = `${dateObj1.getFullYear()}-${(dateObj1.getMonth() + 1).toString().padStart(2, '0')}-${dateObj1.getDate().toString().padStart(2, '0')}`;
+      data.exam_date = formattedDate
+      data.submission_date = formattedDate1
+      data.month = `${(dateObj.getMonth() + 1).toString()}`
     })
+    res.json(result)
 
   } catch (error) {
     res.status(500).json({ message: 'Error fetching users' });
@@ -1016,6 +1028,5 @@ console.log("Lenght of student data: " + studentdata.length)
   }
 });
 app.listen(500, async () => {
- 
   console.log("Its Runing")
 })
