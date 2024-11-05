@@ -632,7 +632,7 @@ app.post('/InsertDiary/:fk_section_id/:subject/:subject_diary/:date/:id/:class/:
   const query1 = `INSERT INTO admin_logs (log_message,time,fk_client_id) values (?,?,?)`;
 
   try {
-    const [results] = await pool.execute(query);
+    const [results] = await pool.execute(query,data);
     const [results1] = await pool.execute(query1,[des,date,cl]);
     res.send({ message: 'Attendance inserted successfully' });
 
@@ -682,7 +682,7 @@ app.get('/checkdiary/:subject/:date/:client/:section', async (req, res) => {
   const client = req.params.client;
   const section = req.params.section;
   const query = `SELECT * FROM homework_diary WHERE fk_client_id=? and date=? and subject=? and fk_section_id=? `
-  const data=[client,data,subject,section]
+  const data=[client,date,subject,section]
   try {
     const [result] = await pool.execute(query,data)
     res.json(result)
