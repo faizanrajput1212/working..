@@ -199,6 +199,22 @@ app.get('/api/teacherlogin/:id/:phone/:pass', async (req, res) => {
     res.status(500).json({ message: 'Error fetching users' });
   }
 });
+app.get('/api/dues/:id/:status/:date/:month', async (req, res) => {
+  const fk_student_id = req.params.id;
+  const status = req.params.status;
+  const date = req.params.date;
+  const mon = req.params.month;
+  console.log(mon)
+  console.log(status)
+  let cal = 0;
+  try {
+    const [results] = await pool.execute(`UPDATE student_fee SET fee_status=? ,fee_method='cash' , payment_date=? WHERE fk_student_id=? and month=? `, [status, date, fk_student_id,mon]);
+    res.json(results);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching users' });
+  }
+});
 app.get('/studentprofile/:id/:client', async (req, res) => {
   const stdid = (req.params.id);
   const clientid = (req.params.client);
